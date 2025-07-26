@@ -1,0 +1,94 @@
+[gd_scene load_steps=3 format=3 uid="uid://ctl7jjcd4olcm"]
+
+[ext_resource type="Texture2D" uid="uid://cvl2j8gpgldw5" path="res://assets/readycover4.png" id="1_l7nf6"]
+[ext_resource type="Script" uid="uid://bvlt4j8ypery0" path="res://Scripts/novel_object.gd" id="1_u6lwt"]
+
+[node name="NovelObject" type="Node2D"]
+script = ExtResource("1_u6lwt")
+
+[node name="PanelContainer" type="Panel" parent="."]
+offset_right = 485.0
+offset_bottom = 485.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Cover" type="TextureRect" parent="."]
+offset_right = 250.0
+offset_bottom = 375.0
+texture = ExtResource("1_l7nf6")
+
+[node name="title" type="Label" parent="."]
+offset_left = 252.0
+offset_top = 20.0
+offset_right = 485.0
+offset_bottom = 51.0
+theme_override_font_sizes/font_size = 22
+text = "Placeholder Title"
+
+[node name="id" type="Label" parent="."]
+offset_left = 427.0
+offset_top = 1.0
+offset_right = 484.0
+offset_bottom = 24.0
+text = "123456"
+
+[node name="author" type="Label" parent="."]
+offset_left = 254.0
+offset_top = 47.0
+offset_right = 476.0
+offset_bottom = 103.0
+theme_override_colors/font_color = Color(0.517184, 0.517184, 0.517184, 1)
+text = "Author
+"
+
+[node name="tags" type="Label" parent="."]
+offset_left = 4.0
+offset_top = 377.0
+offset_right = 247.0
+offset_bottom = 480.0
+text = "#Tag, # Tag, #Tag"
+
+[node name="publicationStatus" type="Label" parent="."]
+offset_left = 254.0
+offset_top = 98.0
+offset_right = 319.0
+offset_bottom = 121.0
+text = "Ongoing"
+
+[node name="likeCount" type="Label" parent="."]
+offset_left = 254.0
+offset_top = 151.0
+offset_right = 321.0
+offset_bottom = 174.0
+text = "100 likes"
+
+[node name="chapterCount" type="Label" parent="."]
+offset_left = 254.0
+offset_top = 128.0
+offset_right = 346.0
+offset_bottom = 151.0
+text = "100 chapter"
+
+[node name="CoverLoadText" type="Label" parent="."]
+offset_right = 118.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+text = "Cover Load Fail"
+
+[node name="synopsis_scroll" type="ScrollContainer" parent="."]
+offset_left = 252.0
+offset_top = 179.0
+offset_right = 484.0
+offset_bottom = 484.0
+
+[node name="synopsis" type="Label" parent="synopsis_scroll"]
+custom_minimum_size = Vector2(232, 300)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.813258, 0.813258, 0.813258, 1)
+text = "Description:
+플러스작품 - [유희생활 어플이 설치되었습니다.]
+
+[유희를 시작합니다.]
+
+나는 창작물 속으로 들어갈 수 있다"
+autowrap_mode = 1
+clip_text = true

@@ -1,0 +1,229 @@
+[gd_scene load_steps=4 format=3 uid="uid://cjipme28dk2g1"]
+
+[ext_resource type="Script" uid="uid://dhw3nh8rceqov" path="res://Scripts/MainViewerLogic.cs" id="1_bo1nx"]
+[ext_resource type="Script" uid="uid://bx15xwfjqj73q" path="res://Scripts/NovelImporter.cs" id="1_jjgbg"]
+[ext_resource type="Script" uid="uid://ctp4pb78stp6o" path="res://Scripts/ui.gd" id="2_8gbba"]
+
+[node name="Node2D" type="Control" node_paths=PackedStringArray("NovelImporterNode", "StatusLabel", "ProgressBar", "NovelListContainer", "SearchLineEdit", "PrevPageButton", "NextPageButton", "PageNumberLabel", "GoToPageLineEdit", "GoToPageButton", "TagFilterLineEdit", "AuthorFilterLineEdit", "StatusFilterOptionButton", "MinChaptersLineEdit", "MaxChaptersLineEdit", "ApplyFiltersButton", "MinLikesLineEdit", "MaxLikesLineEdit", "SortByOptionButton", "SortOrderOptionButton")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 606.0
+offset_top = 210.0
+offset_right = 606.0
+offset_bottom = 210.0
+script = ExtResource("1_bo1nx")
+NovelImporterNode = NodePath("Importer")
+StatusLabel = NodePath("UI/Label")
+ProgressBar = NodePath("UI/ProgressBar")
+NovelListContainer = NodePath("UI/GridContainer")
+SearchLineEdit = NodePath("UI/Search")
+PrevPageButton = NodePath("UI/Prev")
+NextPageButton = NodePath("UI/Next")
+PageNumberLabel = NodePath("UI/Page Number")
+GoToPageLineEdit = NodePath("UI/PageLine")
+GoToPageButton = NodePath("UI/PageLineBtn")
+TagFilterLineEdit = NodePath("UI/FilterOptions/TagLine")
+AuthorFilterLineEdit = NodePath("UI/FilterOptions/AuthorLine")
+StatusFilterOptionButton = NodePath("UI/FilterOptions/StatusOptionButton")
+MinChaptersLineEdit = NodePath("UI/FilterOptions/MinChaptersLine")
+MaxChaptersLineEdit = NodePath("UI/FilterOptions/MaxChaptersLine")
+ApplyFiltersButton = NodePath("UI/FilterOptions/FilterApplyBtn")
+MinLikesLineEdit = NodePath("UI/FilterOptions/MinLikes")
+MaxLikesLineEdit = NodePath("UI/FilterOptions/MaxLikes")
+SortByOptionButton = NodePath("UI/FilterOptions/SortOptionBtn")
+SortOrderOptionButton = NodePath("UI/FilterOptions/SortOrderBtn")
+
+[node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("2_8gbba")
+
+[node name="Search" type="LineEdit" parent="UI"]
+anchors_preset = -1
+anchor_left = 0.281445
+anchor_right = 0.718555
+anchor_bottom = 0.0569444
+grow_horizontal = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="Label" parent="UI"]
+visible = false
+offset_left = 117.0
+offset_top = 129.0
+offset_right = 432.0
+offset_bottom = 342.0
+theme_override_font_sizes/font_size = 51
+text = "Test"
+
+[node name="ProgressBar" type="ProgressBar" parent="UI"]
+visible = false
+offset_left = 175.0
+offset_top = 222.0
+offset_right = 179.0
+offset_bottom = 283.0
+theme_override_font_sizes/font_size = 41
+
+[node name="GridContainer" type="GridContainer" parent="UI"]
+offset_top = 84.0
+offset_right = 2552.0
+offset_bottom = 84.0
+size_flags_horizontal = 3
+size_flags_vertical = 0
+columns = 4
+
+[node name="Next" type="Button" parent="UI"]
+offset_left = 1840.0
+offset_right = 1885.0
+offset_bottom = 31.0
+text = "Next"
+
+[node name="Page Number" type="Label" parent="UI"]
+offset_left = 1840.0
+offset_top = 62.0
+offset_right = 1880.0
+offset_bottom = 85.0
+
+[node name="Prev" type="Button" parent="UI"]
+offset_left = 1840.0
+offset_top = 31.0
+offset_right = 1883.0
+offset_bottom = 62.0
+text = "Prev
+"
+
+[node name="PageLine" type="LineEdit" parent="UI"]
+offset_left = 1885.0
+offset_right = 1953.56
+offset_bottom = 31.0
+
+[node name="PageLineBtn" type="Button" parent="UI"]
+offset_left = 1885.0
+offset_top = 31.0
+offset_right = 1938.0
+offset_bottom = 62.0
+text = "Go To"
+
+[node name="FilterBtn" type="Button" parent="UI"]
+offset_left = 582.0
+offset_right = 717.0
+offset_bottom = 78.0
+theme_override_font_sizes/font_size = 51
+text = "Filter"
+
+[node name="FilterOptions" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 587.0
+offset_top = 80.0
+offset_right = 655.563
+offset_bottom = 120.0
+
+[node name="Panel" type="Panel" parent="UI/FilterOptions"]
+layout_mode = 2
+offset_left = -172.0
+offset_top = 2.0
+offset_right = 333.0
+offset_bottom = 323.0
+
+[node name="TagLine" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 2
+offset_left = -167.0
+offset_top = 6.0
+offset_right = -81.0
+offset_bottom = 58.0
+placeholder_text = "Tag Here"
+
+[node name="AuthorLine" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 2
+offset_left = -77.0
+offset_top = 8.0
+offset_right = 32.0
+offset_bottom = 60.0
+placeholder_text = "Author Here"
+
+[node name="MinChaptersLine" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 2
+offset_left = -165.0
+offset_top = 133.0
+offset_right = -46.0
+offset_bottom = 185.0
+placeholder_text = "Min Chapters"
+
+[node name="MaxChaptersLine" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 2
+offset_left = -45.0
+offset_top = 135.0
+offset_right = 96.0
+offset_bottom = 187.0
+placeholder_text = "Max Chapters"
+
+[node name="StatusOptionButton" type="OptionButton" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 39.0
+offset_top = 16.0
+offset_right = 146.0
+offset_bottom = 47.0
+
+[node name="FilterApplyBtn" type="Button" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 31.0
+offset_top = 286.0
+offset_right = 83.0
+offset_bottom = 317.0
+text = "Apply"
+
+[node name="AdultOptionButton" type="OptionButton" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 142.0
+offset_top = 154.0
+offset_right = 212.0
+offset_bottom = 185.0
+
+[node name="CoverOptionButton" type="OptionButton" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 146.0
+offset_top = 179.0
+offset_right = 219.0
+offset_bottom = 210.0
+
+[node name="MinLikes" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = -158.0
+offset_top = 187.0
+offset_right = -89.4375
+offset_bottom = 218.0
+placeholder_text = "Min Likes"
+
+[node name="MaxLikes" type="LineEdit" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = -58.0
+offset_top = 193.0
+offset_right = 10.5625
+offset_bottom = 224.0
+placeholder_text = "Max Likes"
+
+[node name="SortOptionBtn" type="OptionButton" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 176.0
+offset_top = 94.0
+offset_right = 208.0
+offset_bottom = 114.0
+
+[node name="SortOrderBtn" type="OptionButton" parent="UI/FilterOptions"]
+layout_mode = 0
+offset_left = 179.0
+offset_top = 123.0
+offset_right = 211.0
+offset_bottom = 143.0
+
+[node name="Importer" type="Node" parent="."]
+script = ExtResource("1_jjgbg")
+
+[connection signal="pressed" from="UI/FilterBtn" to="UI" method="_on_filter_btn_pressed"]
