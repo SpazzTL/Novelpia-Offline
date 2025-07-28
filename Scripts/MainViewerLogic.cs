@@ -4,6 +4,9 @@ using System;
 using System.Linq; // For .Any() and .Contains() on arrays
 using System.Collections.Generic; // Explicitly added for Dictionary and List
 using System.IO; // For Path.GetExtension
+using System.Text.Json;
+using Godot.Collections;
+
 
 public partial class MainViewerLogic : Control
 //region Variables
@@ -74,11 +77,26 @@ public partial class MainViewerLogic : Control
 
 
 	// A dictionary to hold all loaded NovelData resources, keyed by ID
-	private Dictionary<string, NovelData> _allNovels = new Dictionary<string, NovelData>();
+	private System.Collections.Generic.Dictionary<string, NovelData> _allNovels = new System.Collections.Generic.Dictionary<string, NovelData>();
 	// A list to hold currently filtered novels (for display)
 	private List<NovelData> _currentFilteredNovels = new List<NovelData>();
 	// List to hold references to dynamically created tag checkboxes
 	private List<CheckBox> _tagFilterCheckBoxes = new List<CheckBox>();
+
+
+
+
+	// --- Data Structures for Category and Selection Management ---
+	private System.Collections.Generic.Dictionary<string, List<string>> _categories = new System.Collections.Generic.Dictionary<string, List<string>>();
+	private HashSet<string> _selectedNovelIds = new HashSet<string>();
+	private System.Collections.Generic.Dictionary<string, CheckBox> _novelCheckBoxes = new System.Collections.Generic.Dictionary<string, CheckBox>();
+	private const string CategoriesSavePath = "user://novel_categories.json";
+	
+	// --- State variables for context-aware popup ---
+	private bool _isBulkEditingCategories = false;
+	private NovelData _currentNovelForCategoryManagement;
+
+
 
 
 	// A placeholder texture to use when cover image loading fails
@@ -110,6 +128,9 @@ public partial class MainViewerLogic : Control
 			GD.PushError("One or more UI elements are not assigned in the editor!");
 			return;
 		}
+
+		// NEW DEBUG PRINT: Confirm NovelsPerPage value
+		GD.Print($"[DEBUG] NovelsPerPage set to: {NovelsPerPage}");
 
 		// Initialize placeholder texture (e.g., a simple gray box)
 		var image = Image.CreateEmpty(100, 150, false, Image.Format.Rgb8);
@@ -185,7 +206,7 @@ public partial class MainViewerLogic : Control
 		SortOrderOptionButton.Select(1); // Default sort Descending - Index 1
 
 		// --- Start the import process ---
-		var jsonlFilePath = "res://novelpia_metadata.jsonl"; 
+		var jsonlFilePath = "user://novelpia_metadata.jsonl"; 
 		NovelImporterNode.ImportNovels(jsonlFilePath);
 	}
 
@@ -211,6 +232,11 @@ public partial class MainViewerLogic : Control
 		UpdatePaginationButtons();
 	}
 
+
+
+
+
+
 	private void OnNovelDataParsed(NovelData novelDataResource)
 	{
 		_allNovels[novelDataResource.Id] = novelDataResource;
@@ -230,6 +256,9 @@ public partial class MainViewerLogic : Control
 		ProgressBar.Value = 100;
 		ProgressBar.Indeterminate = false;
 		ProgressBar.Visible = false;
+
+		// NEW DEBUG PRINT: Total novels loaded into _allNovels
+		GD.Print($"[DEBUG] Total novels loaded into _allNovels: {_allNovels.Count}");
 
 		// Populate dynamic tag filters after all novels are imported
 		PopulateTagFilters();
@@ -266,7 +295,7 @@ public partial class MainViewerLogic : Control
 		_tagFilterCheckBoxes.Clear(); // Clear the list of references
 
 		// Collect all tags and count their occurrences
-		var tagCounts = new Dictionary<string, int>();
+		var tagCounts = new System.Collections.Generic.Dictionary<string, int>();
 		foreach (var novel in _allNovels.Values)
 		{
 			if (novel.Tags != null)
@@ -335,12 +364,14 @@ public partial class MainViewerLogic : Control
 	{
 		IEnumerable<NovelData> filtered = _allNovels.Values.AsEnumerable();
 
+	
 		// 1. Apply general search text filter (from SearchLineEdit)
 		string generalSearchText = SearchLineEdit.Text.Trim().ToLower();
 		if (!string.IsNullOrEmpty(generalSearchText))
 		{
 			filtered = filtered.Where(novel =>
 				(novel.Title != null && novel.Title.ToLower().Contains(generalSearchText)) ||
+				(novel.Id != null && novel.Id.ToLower().Contains(generalSearchText)) ||
 				(novel.Author != null && novel.Author.ToLower().Contains(generalSearchText)) ||
 				(novel.Tags != null && novel.Tags.Any(tag => tag.ToLower().Contains(generalSearchText))) ||
 				(novel.Synopsis != null && novel.Synopsis.ToLower().Contains(generalSearchText)) 
@@ -530,6 +561,9 @@ public partial class MainViewerLogic : Control
 		CalculateTotalPages();
 		DisplayCurrentPage();
 
+		// NEW DEBUG PRINT: Filtered novel count and total pages
+		GD.Print($"[DEBUG] After filters: _currentFilteredNovels.Count = {_currentFilteredNovels.Count}, _totalPages = {_totalPages}");
+
 		StatusLabel.Text = $"Displaying {_currentFilteredNovels.Count} novels matching filter criteria.";
 	}
 
@@ -692,23 +726,29 @@ public partial class MainViewerLogic : Control
 		NextPageButton.Disabled = (_currentPage >= _totalPages);
 	}
 
-	// Helper method to create a single novel entry panel (remains largely the same)
+	// Helper method to create a single novel entry panel
 	private PanelContainer CreateNovelEntryPanel(NovelData novelDataResource)
 	{
 		var novelEntryPanel = new PanelContainer();
 		novelEntryPanel.CustomMinimumSize = NovelEntryMinSize;
-		novelEntryPanel.SetHSizeFlags(Control.SizeFlags.ShrinkCenter); 
-		novelEntryPanel.SetVSizeFlags(Control.SizeFlags.ShrinkCenter);
+		novelEntryPanel.SetHSizeFlags(Control.SizeFlags.ExpandFill); 
+		novelEntryPanel.SetVSizeFlags(Control.SizeFlags.ExpandFill);
 		novelEntryPanel.AddThemeConstantOverride("panel_margin_left", 5);
 		novelEntryPanel.AddThemeConstantOverride("panel_margin_top", 5);
 		novelEntryPanel.AddThemeConstantOverride("panel_margin_right", 5);
 		novelEntryPanel.AddThemeConstantOverride("panel_margin_bottom", 5);
 
-		var mainHBox = new HBoxContainer();
-		mainHBox.AddThemeConstantOverride("separation", 10);
-		mainHBox.SetHSizeFlags(Control.SizeFlags.ExpandFill);
-		mainHBox.SetVSizeFlags(Control.SizeFlags.ExpandFill);
-		novelEntryPanel.AddChild(mainHBox);
+		var mainVBox = new VBoxContainer();
+		mainVBox.AddThemeConstantOverride("separation", 5);
+		mainVBox.SetHSizeFlags(Control.SizeFlags.ExpandFill);
+		mainVBox.SetVSizeFlags(Control.SizeFlags.ExpandFill);
+		novelEntryPanel.AddChild(mainVBox);
+
+		var contentHBox = new HBoxContainer();
+		contentHBox.AddThemeConstantOverride("separation", 10);
+		contentHBox.SetHSizeFlags(Control.SizeFlags.ExpandFill);
+		contentHBox.SetVSizeFlags(Control.SizeFlags.ExpandFill);
+		mainVBox.AddChild(contentHBox); // Add this HBox to the main VBox
 
 		// 1. Cover Image
 		var coverTextureRect = new TextureRect();
@@ -720,16 +760,15 @@ public partial class MainViewerLogic : Control
 
 		bool coverLoaded = false;
 		bool isCoverPathProvided = !string.IsNullOrEmpty(novelDataResource.CoverLocalPath);
-		string originalCoverPath = novelDataResource.CoverLocalPath; // The path from metadata
-		string placeholderText = "No Cover"; // Default if no path provided or all attempts fail
+		string originalCoverPath = novelDataResource.CoverLocalPath;
+		string placeholderText = "No Cover";
 
 		if (isCoverPathProvided)
 		{
 			var image = new Image();
 			Error loadErr = Error.Failed;
-			bool fileFoundAtAnyAttempt = false; // Flag to track if *any* file existed
+			bool fileFoundAtAnyAttempt = false;
 
-			// --- Attempt 1: Load image directly from the path provided in metadata ---
 			if (Godot.FileAccess.FileExists(originalCoverPath))
 			{
 				fileFoundAtAnyAttempt = true;
@@ -737,20 +776,10 @@ public partial class MainViewerLogic : Control
 				if (loadErr == Error.Ok)
 				{
 					coverLoaded = true;
-					GD.Print($"Successfully loaded image directly: {originalCoverPath}");
 				}
-				else
-				{
-					GD.PushWarning($"Failed direct load for {originalCoverPath}, Error: {loadErr}.");
-				}
-			}
-			else
-			{
-				GD.PushWarning($"File does not exist: {originalCoverPath}.");
 			}
 
-			// --- Attempt 2: If primary load failed, try alternate extension (.jpg if original was .png, or .png if original was .jpg/.jpeg) ---
-			if (!coverLoaded) // Only try if not loaded yet
+			if (!coverLoaded)
 			{
 				string alternatePath = null;
 				string originalExtension = Path.GetExtension(originalCoverPath).ToLower();
@@ -768,35 +797,21 @@ public partial class MainViewerLogic : Control
 				{
 					if (Godot.FileAccess.FileExists(alternatePath))
 					{
-						fileFoundAtAnyAttempt = true; // An alternate file existed
-						GD.Print($"Attempting alternate extension fallback for: {alternatePath}");
+						fileFoundAtAnyAttempt = true;
 						loadErr = image.Load(alternatePath);
 						if (loadErr == Error.Ok)
 						{
 							coverLoaded = true;
-							GD.Print($"Successfully loaded alternate extension: {alternatePath}");
 						}
-						else
-						{
-							GD.PushWarning($"Failed alternate extension load for {alternatePath}, Error: {loadErr}.");
-						}
-					}
-					else
-					{
-						GD.PushWarning($"Alternate extension file does not exist: {alternatePath}.");
 					}
 				}
 			}
 
-			// --- Attempt 3: If still not loaded and original path was PNG, try LoadPngFromBuffer ---
-			// This is specifically for PNGs that are malformed but might be readable via buffer.
-			// Only attempt this if the original file was indeed a PNG AND it exists.
 			if (!coverLoaded && originalCoverPath.ToLower().EndsWith(".png"))
 			{
-				if (Godot.FileAccess.FileExists(originalCoverPath)) // Check existence again for buffer read
+				if (Godot.FileAccess.FileExists(originalCoverPath))
 				{
-					fileFoundAtAnyAttempt = true; // The PNG file for buffer read existed
-					GD.Print($"Attempting PNG buffer fallback for: {originalCoverPath}");
+					fileFoundAtAnyAttempt = true;
 					byte[] buffer = null;
 					try
 					{
@@ -815,12 +830,11 @@ public partial class MainViewerLogic : Control
 
 					if (buffer != null)
 					{
-						image = new Image(); // New image instance for buffer load
+						image = new Image();
 						loadErr = image.LoadPngFromBuffer(buffer);
 						if (loadErr == Error.Ok)
 						{
 							coverLoaded = true;
-							GD.Print($"Successfully loaded PNG from buffer (fallback): {originalCoverPath}");
 						}
 						else
 						{
@@ -835,21 +849,20 @@ public partial class MainViewerLogic : Control
 				var imageTexture = ImageTexture.CreateFromImage(image);
 				coverTextureRect.Texture = imageTexture;
 			}
-			else // If still not loaded after all attempts
+			else
 			{
 				if (fileFoundAtAnyAttempt)
 				{
-					placeholderText = "Cover Load Failed"; // At least one file existed but couldn't be loaded
+					placeholderText = "Cover Load Failed";
 				}
 				else
 				{
-					placeholderText = "Cover Missing"; // No file found at any expected path
+					placeholderText = "Cover Missing";
 				}
 			}
 		} 
-		// If !isCoverPathProvided, placeholderText remains "No Cover" (initial default)
 		
-		if (!coverLoaded) // This block now uses the determined placeholderText
+		if (!coverLoaded)
 		{
 			coverTextureRect.Texture = _placeholderTexture;
 			var placeholderLabel = new Label();
@@ -858,10 +871,10 @@ public partial class MainViewerLogic : Control
 			placeholderLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 			placeholderLabel.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
 			
-			placeholderLabel.Text = placeholderText; // Use the determined text
+			placeholderLabel.Text = placeholderText;
 			coverTextureRect.AddChild(placeholderLabel);
 		}
-		mainHBox.AddChild(coverTextureRect);
+		contentHBox.AddChild(coverTextureRect); // Add cover to content HBox
 
 		// 2. Novel Info (Text)
 		var infoVBox = new VBoxContainer();
@@ -871,13 +884,12 @@ public partial class MainViewerLogic : Control
 
 		var titleLabel = new RichTextLabel();
 		string displayTitle = string.IsNullOrEmpty(novelDataResource.Title) ? "Untitled Novel" : novelDataResource.Title;
-		// Modified: Add Novel ID next to the title and increase height
 		titleLabel.BbcodeEnabled = true;
 		titleLabel.Text = $"[b]{displayTitle}[/b] [color=#808080][{novelDataResource.Id}][/color]";
 		titleLabel.AutowrapMode = TextServer.AutowrapMode.Word;
-		titleLabel.CustomMinimumSize = new Vector2(0, 50); // Increased from 40 to 50
+		titleLabel.CustomMinimumSize = new Vector2(0, 50);
 		titleLabel.SetVSizeFlags(Control.SizeFlags.ShrinkBegin);
-		titleLabel.SelectionEnabled = true; // Enable selection for title
+		titleLabel.SelectionEnabled = true;
 		infoVBox.AddChild(titleLabel);
 
 		if (!string.IsNullOrEmpty(novelDataResource.Author))
@@ -941,11 +953,38 @@ public partial class MainViewerLogic : Control
 			synopsisLabel.AutowrapMode = TextServer.AutowrapMode.Word;
 			synopsisLabel.SetVSizeFlags(Control.SizeFlags.ExpandFill);
 			synopsisLabel.CustomMinimumSize = new Vector2(0, 80);
-			synopsisLabel.SelectionEnabled = true; // Enable selection for synopsis
+			synopsisLabel.SelectionEnabled = true;
 			infoVBox.AddChild(synopsisLabel);
 		}
 		
-		mainHBox.AddChild(infoVBox);
+		contentHBox.AddChild(infoVBox); // Add info to content HBox
+
+
+		// NEW: Buttons below the cover and info
+		var buttonHBox = new HBoxContainer();
+		buttonHBox.AddThemeConstantOverride("separation", 5);
+		buttonHBox.SetHSizeFlags(Control.SizeFlags.ExpandFill);
+		buttonHBox.SetVSizeFlags(Control.SizeFlags.ShrinkBegin); // Shrink to fit buttons
+		mainVBox.AddChild(buttonHBox); // Add button HBox to the main VBox
+
+		var addToCollectionButton = new Button();
+		addToCollectionButton.Text = "Add to Collection";
+		addToCollectionButton.SetHSizeFlags(Control.SizeFlags.ExpandFill); // Make buttons expand
+		addToCollectionButton.Pressed += () => GD.Print($"'Add to Collection' pressed for Novel ID: {novelDataResource.Id}");
+		buttonHBox.AddChild(addToCollectionButton);
+
+		var downloadNovelButton = new Button();
+		downloadNovelButton.Text = "Download Novel";
+		downloadNovelButton.SetHSizeFlags(Control.SizeFlags.ExpandFill);
+		downloadNovelButton.Pressed += () => DownloadNovel(novelDataResource.Id, novelDataResource.Title);;
+		buttonHBox.AddChild(downloadNovelButton);
+
+		var refreshButton = new Button();
+		refreshButton.Text = "Refresh";
+		refreshButton.SetHSizeFlags(Control.SizeFlags.ExpandFill);
+		refreshButton.Pressed += () => GD.Print($"'Refresh' pressed for Novel ID: {novelDataResource.Id}");
+		buttonHBox.AddChild(refreshButton);
+		
 		return novelEntryPanel;
 	}
 
@@ -966,4 +1005,64 @@ public void RefreshDisplay()
 			child.QueueFree();
 		}
 	}
+
+
+	private void DownloadNovel(string novelId, string title)
+	{
+
+	string executableDir = OS.GetExecutablePath().GetBaseDir();
+	string downloaderExe = "NovelpiaDownloader.exe";
+	string downloaderPath = Path.Combine(executableDir, "programs", downloaderExe);
+
+
+	string safeFileName = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
+	string outputFileName = $"{safeFileName}.html"; // Since you use the -html flag
+
+	// Define the output directory inside the user data folder
+	string outputDir = ProjectSettings.GlobalizePath("user://downloads");
+	
+	// Ensure the output directory exists
+	Directory.CreateDirectory(outputDir);
+
+	string outputPath = Path.Combine(outputDir, outputFileName);
+
+	// 2. Check if the downloader executable exists
+	if (!File.Exists(downloaderPath))
+	{
+		GD.PushError($"Downloader not found. Looked for it at: {downloaderPath}");
+		return;
+	}
+
+	// 3. Assemble the arguments
+	var arguments = new List<string>
+	{
+		"-autostart",
+		"-novelid",
+		novelId,
+		"-html",
+		"-output",
+		outputPath
+	};
+
+	// 4. Execute the command
+	GD.Print($"Running: {downloaderPath}");
+	GD.Print($"Outputting to: {outputPath}");
+
+// FIX: Change 'Error' to 'int' for the result variable
+	int result = OS.Execute(downloaderPath, arguments.ToArray());
+
+	// FIX: Check for 0 (success) instead of Error.Ok
+	if (result != 0) // 0 typically means success for external processes
+	{
+		GD.PushError($"Failed to run downloader. Process exited with code: {result}");
+	}
+	else
+	{
+		GD.Print($"Downloader for novel {novelId} executed successfully. Check {outputPath}");
+	}
+	}
+
+
+
+
 }

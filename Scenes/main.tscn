@@ -1,8 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://cjipme28dk2g1"]
+[gd_scene load_steps=7 format=3 uid="uid://cjipme28dk2g1"]
 
 [ext_resource type="Script" uid="uid://dhw3nh8rceqov" path="res://Scripts/MainViewerLogic.cs" id="1_bo1nx"]
 [ext_resource type="Script" uid="uid://bx15xwfjqj73q" path="res://Scripts/NovelImporter.cs" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://c5advkj2rm66e" path="res://Scripts/ui.gd" id="2_8gbba"]
+[ext_resource type="Script" uid="uid://x2hl478ihjd2" path="res://Scripts/VersionChecker.gd" id="4_jjvhh"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jjvhh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8gbba"]
 bg_color = Color(0.298933, 0.249626, 0.349642, 1)
@@ -39,16 +42,73 @@ SortByOptionButton = NodePath("UI/FilterOptions/SortOptionBtn")
 SortOrderOptionButton = NodePath("UI/FilterOptions/SortOrderBtn")
 TagFilterContainer = NodePath("UI/FilterOptions/TagScrollContainer/TagContainer")
 ClearTagFiltersButton = NodePath("UI/FilterOptions/ClearTagBtn")
+NovelEntryMinSize = Vector2(400, 400)
 NovelsPerPage = 10
+
+[node name="UpdateUI" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="UpdateUI" type="Control" parent="UpdateUI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="UpdateUI/UpdateUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_jjvhh")
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="Label" parent="UpdateUI/UpdateUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.151758
+anchor_top = 0.4
+anchor_right = 0.848242
+anchor_bottom = 0.6
+offset_bottom = -6.10352e-05
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 211
+text = "Update Available "
+metadata/_edit_use_anchors_ = true
+
+[node name="DownloadUpdate" type="Button" parent="UpdateUI/UpdateUI"]
+layout_mode = 0
+offset_left = 2084.0
+offset_top = 1301.0
+offset_right = 2561.0
+offset_bottom = 1441.0
+theme_override_font_sizes/font_size = 96
+text = "Download"
+
+[node name="SkipUpdate" type="Button" parent="UpdateUI/UpdateUI"]
+layout_mode = 0
+offset_top = 1301.0
+offset_right = 477.0
+offset_bottom = 1441.0
+theme_override_font_sizes/font_size = 96
+text = "Skip
+"
 
 [node name="UI" type="CanvasLayer" parent="."]
 script = ExtResource("2_8gbba")
 
 [node name="Search" type="LineEdit" parent="UI"]
 anchors_preset = -1
-anchor_left = 0.281445
-anchor_right = 0.718555
-anchor_bottom = 0.0569444
+anchor_left = 0.28125
+anchor_right = 0.698407
+anchor_bottom = 0.0571374
+offset_right = 51.0781
+offset_bottom = 28.7222
 grow_horizontal = 2
 metadata/_edit_use_anchors_ = true
 
@@ -80,12 +140,13 @@ theme_override_font_sizes/font_size = 41
 
 [node name="NovelContainer" type="GridContainer" parent="UI"]
 anchors_preset = -1
-anchor_top = 0.0611111
+anchor_top = 0.0819444
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
+size_flags_vertical = 4
 columns = 5
 metadata/_edit_use_anchors_ = true
 
@@ -129,6 +190,7 @@ theme_override_font_sizes/font_size = 51
 text = "Filter"
 
 [node name="FilterOptions" type="Control" parent="UI"]
+visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_left = 587.0
@@ -254,7 +316,18 @@ offset_right = -77.0
 offset_bottom = 104.0
 text = "Clear Tags"
 
+[node name="MainUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="Importer" type="Node" parent="."]
 script = ExtResource("1_jjgbg")
 
+[node name="VersionChecker" type="Node" parent="."]
+script = ExtResource("4_jjvhh")
+
+[connection signal="pressed" from="UpdateUI/UpdateUI/DownloadUpdate" to="VersionChecker" method="_on_download_update_pressed"]
+[connection signal="pressed" from="UpdateUI/UpdateUI/SkipUpdate" to="VersionChecker" method="_on_skip_update_pressed"]
 [connection signal="pressed" from="UI/FilterBtn" to="UI" method="_on_filter_btn_pressed"]
