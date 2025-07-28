@@ -3,12 +3,11 @@
 // Resources are excellent for data containers that can be instantiated, saved, and managed.
 
 using Godot;
-using System;
-using System.Collections.Generic;
+using Godot.Collections; // Required for Godot's collection types
 
 public partial class NovelData : Resource
 {
-	[Export] // Makes the property visible and editable in the Godot editor
+	[Export]
 	public string Id { get; set; } = "";
 
 	[Export]
@@ -21,30 +20,33 @@ public partial class NovelData : Resource
 	public string Author { get; set; } = "";
 
 	[Export]
-	public string[] Tags { get; set; } = new string[0]; // Use string array for tags
+	public string[] Tags { get; set; } = new string[0];
+
+	// CORRECTED: Changed from List<string> to Godot's Array<string> for engine compatibility.
+	[Export]
+	public Array<string> Categories { get; set; } = new Array<string>();
 
 	[Export]
 	public bool IsAdult { get; set; } = false;
 
 	[Export]
-	public string PublicationStatus { get; set; } = ""; // e.g., "연재중", "완결", "연재중단"
+	public string PublicationStatus { get; set; } = "";
 
 	[Export]
-	public string CoverUrl { get; set; } = ""; // Original URL for the cover image
+	public string CoverUrl { get; set; } = "";
 
 	[Export]
-	public string CoverLocalPath { get; set; } = ""; // Local path to the downloaded cover image
+	public string CoverLocalPath { get; set; } = "";
 
 	[Export]
-	public int LikeCount { get; set; } = 0; // Changed from int? to int, default to 0
+	public int LikeCount { get; set; } = 0;
 
 	[Export]
-	public int ChapterCount { get; set; } = 0; // Changed from int? to int, default to 0
+	public int ChapterCount { get; set; } = 0;
 
-	// Default constructor (required for Godot to instantiate resources)
 	public NovelData() : base() { }
 
-	// Parameterized constructor for easy initialization
+	// Constructor updated to work with the corrected properties.
 	public NovelData(
 		string id,
 		string title,
@@ -55,8 +57,8 @@ public partial class NovelData : Resource
 		string publicationStatus,
 		string coverUrl,
 		string coverLocalPath,
-		int likeCount, // Changed from int? to int
-		int chapterCount) : base() // Changed from int? to int
+		int likeCount,
+		int chapterCount) : base()
 	{
 		Id = id;
 		Title = title;
@@ -69,9 +71,9 @@ public partial class NovelData : Resource
 		CoverLocalPath = coverLocalPath;
 		LikeCount = likeCount;
 		ChapterCount = chapterCount;
+		Categories = new Array<string>(); // Initialize as a new Godot Array
 	}
 
-	// Optional: Override ToString for easier debugging
 	public override string ToString()
 	{
 		return $"[NovelData] ID: {Id}, Title: {Title}, Author: {Author}";
